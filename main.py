@@ -1,86 +1,53 @@
 #!/usr/bin/env python
-# gitdoc (*temp name)
-import os, sys
+
+import os
+import sys
+
 from git import Repo, GitCommandError
 from gi.repository import Gtk
 
-join = os.path.join
-repo = Repo("testRepo/repo/")
-assert not repo.bare
+from config import ConfigHandler
+from startupHandler import StartupDialogHandler
 
-currentFile = "doc.txt"
+#-----------------------------------------------------#
+# Main App
+#-----------------------------------------------------#
+class Main():
 
-def handleGit():
-	#print repo.git.status()
-	try:
-		repo.git.add(currentFile)
-		commitInfo = repo.git.commit(m="update File")
-		pushInfo = repo.git.push()
+	def __init__(self):
 
-	except GitCommandError, command:
-		if command:
-			info = repo.git.status()
-			statusBar.push(0, info[-42:])
+		# Start up
+		# Check for config file
+		try: 
+			ConfigHandler.readCfg()
 
-def save(_arg):
-	textBuffer = builder.get_object("textbuffer1")
+		except:
+			print "Missing Config File, write new file!"
+			ConfigHandler.writeCfg()
 
-	start = textBuffer.get_start_iter()
-	end = textBuffer.get_end_iter()
+		# Set the builder (is it wise to only use one?)
+		self.builder = Gtk.Builder()
 
-	text = textBuffer.get_text(start, end, True)
+		# Load Glades
+		self.loadGladeFiles()
+		
+		# Call startup
+		self.callStartupDialog()
 
-	f = open('testRepo/repo/doc.txt', 'w')
-	f.write(text)
-	f.close()
+		# Start Gtk
+		Gtk.main()
 
-	# Now push and save it
-	handleGit()
+	def loadGladeFiles(self):
+		self.builder.add_from_file("startup_dialog.glade")
+		self.builder.connect_signals(StartupDialogHandler())
 
-def firstRun():
-	#pullInfo = repo.git.pull()
-	#statusBar.push(0, pullInfo)
+	def callStartupDialog(self):
+		self.startupDialog = self.builder.get_object("dialog1")
+		self.startupDialog.show_all()
 
-	f = open('testRepo/repo/doc.txt', 'r+')
-	text = f.read()
-	textBuffer = builder.get_object("textbuffer1")
-	textBuffer.set_text(text)
-	f.close()
-
-
-def quit(*args):
-	Gtk.main_quit(*args)
-	sys.exit()
-
-def handleGitSettings(*args):
-	gitSettingsDialog = builder.get_object("dialog1")
-	gitSettingsDialog.show_all()
+	def callMainWindow(self):
+		pass
 
 
-class Handler:
-    def onDeleteWindow(self, *args):
-        Gtk.main_quit(*args)
-        sys.exit()
+m = Main()
 
-builder = Gtk.Builder()
-builder.add_from_file("layout.glade")
-builder.add_from_file("git_settings_layout.glade")
-builder.connect_signals(Handler())
-
-window = builder.get_object("window1")
-window.show_all()
-
-savebtn = builder.get_object("imagemenuitem3")
-savebtn.connect("activate", save)
-
-quitbtn = builder.get_object("imagemenuitem5")
-quitbtn.connect("activate", quit)
-
-gitSettings = builder.get_object("gitSettings")
-gitSettings.connect("activate", handleGitSettings)
-
-statusBar = builder.get_object("statusbar1")
-
-
-firstRun()
-Gtk.main()

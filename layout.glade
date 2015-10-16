@@ -224,8 +224,6 @@
           <object class="GtkTextView" id="textview1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="has_focus">True</property>
-            <property name="has_default">True</property>
             <property name="hadjustment">adjustment1</property>
             <property name="vadjustment">adjustment2</property>
             <property name="pixels_above_lines">2</property>
